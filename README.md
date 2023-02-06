@@ -8,7 +8,14 @@
 ## Downloading
 
 ```
-git clone {repository URL}
+git clone https://github.com/KosIrina/nodejs2022Q4-service.git
+```
+
+## Switching to the correct folder and branch
+
+```
+cd nodejs2022Q4-service
+git checkout rest-service
 ```
 
 ## Installing NPM modules
@@ -19,19 +26,26 @@ npm install
 
 ## Running application
 
+Before running the application you can change default port to any other in `.env` file in the root directory.
+
+Otherwise, application will be launched on port 4000.
+
 ```
 npm start
 ```
 
-After starting the app on port (4000 as default) you can open
+After starting the app on port you can open
 in your browser OpenAPI documentation by typing http://localhost:4000/doc/.
+
+! Note, that if you have changed port in `.env` file, documentation will be available on the corresponding port.
+
 For more information about OpenAPI/Swagger please visit https://swagger.io/.
 
 ## Testing
 
-After application running open new terminal and enter:
+After running the application open new terminal and enter:
 
-To run all tests without authorization
+To run all tests
 
 ```
 npm run test
@@ -43,23 +57,15 @@ To run only one of all test suites
 npm run test -- <path to suite>
 ```
 
-To run all test with authorization
-
-```
-npm run test:auth
-```
-
-To run only specific test suite with authorization
-
-```
-npm run test:auth -- <path to suite>
-```
-
-### Auto-fix and format
+## Auto-fix
+Applies eslint
 
 ```
 npm run lint
 ```
+
+## Format
+Applies prettier
 
 ```
 npm run format
