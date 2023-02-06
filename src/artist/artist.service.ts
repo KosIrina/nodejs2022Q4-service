@@ -1,15 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import { DBService } from 'src/db/db.service';
+import { TrackService } from 'src/track/track.service';
+import { AlbumService } from 'src/album/album.service';
 import { CreateArtistDto } from './dto/create-artist.dto';
 import { UpdateArtistDto } from './dto/update-artist.dto';
 import { IArtist } from './models/artist.model';
 import { StatusCodes } from 'src/types';
-import { TrackService } from 'src/track/track.service';
 
 @Injectable()
 export class ArtistService {
-  constructor(private db: DBService, private trackService: TrackService) {}
+  constructor(
+    private db: DBService,
+    private trackService: TrackService,
+    private albumService: AlbumService,
+  ) {}
 
   create(createArtistDto: CreateArtistDto) {
     const newArtist = {
@@ -53,6 +58,7 @@ export class ArtistService {
       return { error: StatusCodes.NotFound };
     }
     this.trackService.removeArtistId(id);
+    this.albumService.removeArtistId(id);
     this.db.artists.splice(currentArtistIndex, 1);
     return { error: null };
   }
