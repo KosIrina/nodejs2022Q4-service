@@ -4,3 +4,5 @@ export enum StatusCodes {
   NotFound,
   UnprocessableEntity = 422,
 }
+
+export type Routes = 'track' | 'artist' | 'album';
