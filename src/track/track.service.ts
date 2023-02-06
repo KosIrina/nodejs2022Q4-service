@@ -65,4 +65,13 @@ export class TrackService {
       }
     });
   }
+
+  removeAlbumId(albumId: string) {
+    const tracks = this.findAll();
+    tracks.forEach((track) => {
+      if (track.albumId === albumId) {
+        track.albumId = null;
+      }
+    });
+  }
 }
