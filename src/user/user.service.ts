@@ -28,7 +28,7 @@ export class UserService {
     return this.db.users;
   }
 
-  findOne(id: string): { data: UserEntity; error: number } {
+  findOne(id: string): { data: UserEntity; error: StatusCodes } {
     const currentUser = this.db.users.find((user) => user.id === id);
     if (!currentUser) {
       return { data: null, error: StatusCodes.NotFound };
@@ -39,7 +39,7 @@ export class UserService {
   update(
     id: string,
     { oldPassword, newPassword }: UpdatePasswordDto,
-  ): { data: UserEntity; error: number } {
+  ): { data: UserEntity; error: StatusCodes } {
     const currentUser = this.db.users.find((user) => user.id === id);
     if (!currentUser) {
       return { data: null, error: StatusCodes.NotFound };
@@ -53,7 +53,7 @@ export class UserService {
     return { data: currentUser, error: null };
   }
 
-  remove(id: string): { error: number } {
+  remove(id: string): { error: StatusCodes } {
     const currentUserIndex = this.db.users.findIndex((user) => user.id === id);
     if (currentUserIndex === -1) {
       return { error: StatusCodes.NotFound };
