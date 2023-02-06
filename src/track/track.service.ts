@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import { DBService } from 'src/db/db.service';
+import { FavsService } from 'src/favs/favs.service';
 import { CreateTrackDto } from './dto/create-track.dto';
 import { UpdateTrackDto } from './dto/update-track.dto';
 import { StatusCodes } from 'src/types';
@@ -8,7 +9,11 @@ import { ITrack } from './models/track.model';
 
 @Injectable()
 export class TrackService {
-  constructor(private db: DBService) {}
+  constructor(
+    private db: DBService,
+    @Inject(forwardRef(() => FavsService))
+    private favsService: FavsService,
+  ) {}
 
   create(createTrackDto: CreateTrackDto) {
     const newTrack = {
@@ -53,6 +58,7 @@ export class TrackService {
     if (currentTrackIndex === -1) {
       return { error: StatusCodes.NotFound };
     }
+    this.favsService.updateAfterEntityDelition('track', id);
     this.db.tracks.splice(currentTrackIndex, 1);
     return { error: null };
   }

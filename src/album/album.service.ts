@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import { DBService } from 'src/db/db.service';
 import { TrackService } from 'src/track/track.service';
+import { FavsService } from 'src/favs/favs.service';
 import { CreateAlbumDto } from './dto/create-album.dto';
 import { UpdateAlbumDto } from './dto/update-album.dto';
 import { IAlbum } from './models/album.model';
@@ -9,7 +10,13 @@ import { StatusCodes } from 'src/types';
 
 @Injectable()
 export class AlbumService {
-  constructor(private db: DBService, private trackService: TrackService) {}
+  constructor(
+    private db: DBService,
+    @Inject(forwardRef(() => TrackService))
+    private trackService: TrackService,
+    @Inject(forwardRef(() => FavsService))
+    private favsService: FavsService,
+  ) {}
 
   create(createAlbumDto: CreateAlbumDto) {
     const newAlbum = {
@@ -54,6 +61,7 @@ export class AlbumService {
       return { error: StatusCodes.NotFound };
     }
     this.trackService.removeAlbumId(id);
+    this.favsService.updateAfterEntityDelition('album', id);
     this.db.albums.splice(currentAlbumIndex, 1);
     return { error: null };
   }

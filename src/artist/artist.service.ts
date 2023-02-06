@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import { DBService } from 'src/db/db.service';
 import { TrackService } from 'src/track/track.service';
 import { AlbumService } from 'src/album/album.service';
+import { FavsService } from 'src/favs/favs.service';
 import { CreateArtistDto } from './dto/create-artist.dto';
 import { UpdateArtistDto } from './dto/update-artist.dto';
 import { IArtist } from './models/artist.model';
@@ -12,8 +13,11 @@ import { StatusCodes } from 'src/types';
 export class ArtistService {
   constructor(
     private db: DBService,
+    @Inject(forwardRef(() => TrackService))
     private trackService: TrackService,
     private albumService: AlbumService,
+    @Inject(forwardRef(() => FavsService))
+    private favsService: FavsService,
   ) {}
 
   create(createArtistDto: CreateArtistDto) {
@@ -59,6 +63,7 @@ export class ArtistService {
     }
     this.trackService.removeArtistId(id);
     this.albumService.removeArtistId(id);
+    this.favsService.updateAfterEntityDelition('artist', id);
     this.db.artists.splice(currentArtistIndex, 1);
     return { error: null };
   }

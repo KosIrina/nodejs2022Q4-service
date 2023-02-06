@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import { DBService } from 'src/db/db.service';
 import { TrackService } from 'src/track/track.service';
 import { AlbumService } from 'src/album/album.service';
@@ -9,7 +9,9 @@ import { StatusCodes, Routes } from 'src/types';
 export class FavsService {
   constructor(
     private db: DBService,
+    @Inject(forwardRef(() => TrackService))
     private trackService: TrackService,
+    @Inject(forwardRef(() => AlbumService))
     private albumService: AlbumService,
     private artistService: ArtistService,
   ) {}
@@ -64,5 +66,14 @@ export class FavsService {
     }
     this.db.favorites[`${route}s`].splice(entityIndex, 1);
     return { error: null, message: null };
+  }
+
+  updateAfterEntityDelition(route: Routes, id: string) {
+    const entityIndex = this.db.favorites[`${route}s`].findIndex(
+      (entityId) => entityId === id,
+    );
+    if (entityIndex !== -1) {
+      this.db.favorites[`${route}s`].splice(entityIndex, 1);
+    }
   }
 }
