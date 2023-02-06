@@ -56,4 +56,13 @@ export class TrackService {
     this.db.tracks.splice(currentTrackIndex, 1);
     return { error: null };
   }
+
+  removeArtistId(artistId: string) {
+    const tracks = this.findAll();
+    tracks.forEach((track) => {
+      if (track.artistId === artistId) {
+        track.artistId = null;
+      }
+    });
+  }
 }

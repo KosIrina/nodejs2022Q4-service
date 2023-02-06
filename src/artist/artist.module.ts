@@ -1,0 +1,12 @@
+import { Module } from '@nestjs/common';
+import { ArtistService } from './artist.service';
+import { ArtistController } from './artist.controller';
+import { DBModule } from 'src/db/db.module';
+import { TrackModule } from 'src/track/track.module';
+
+@Module({
+  controllers: [ArtistController],
+  providers: [ArtistService],
+  imports: [DBModule, TrackModule],
+})
+export class ArtistModule {}
