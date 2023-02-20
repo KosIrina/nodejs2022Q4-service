@@ -1,15 +1,9 @@
-import { IArtist } from 'src/artist/models/artist.model';
-import { IAlbum } from 'src/album/models/album.model';
-import { ITrack } from 'src/track/models/track.model';
-
-export interface IFavorites {
-  artists: string[];
-  albums: string[];
-  tracks: string[];
-}
+import { ArtistEntity } from 'src/artist/entities/artist.entity';
+import { AlbumEntity } from 'src/album/entities/album.entity';
+import { TrackEntity } from 'src/track/entities/track.entity';
 
 export interface IFavoritesRepsonse {
-  artists: IArtist[];
-  albums: IAlbum[];
-  tracks: ITrack[];
+  artists: ArtistEntity[];
+  albums: AlbumEntity[];
+  tracks: TrackEntity[];
 }
