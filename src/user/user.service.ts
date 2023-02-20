@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { v4 as uuidv4 } from 'uuid';
-import { DBService } from 'src/db/db.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { UserEntity } from './entities/user.entity';
@@ -8,39 +8,33 @@ import { StatusCodes } from 'src/types';
 
 @Injectable()
 export class UserService {
-  constructor(private db: DBService) {}
+  constructor(
+    @InjectRepository(UserEntity)
+    private readonly repository: Repository<UserEntity>,
+  ) {}
 
-  create({ login, password }: CreateUserDto): UserEntity {
-    const timestamp = Date.now();
-    const newUser = new UserEntity({
-      id: uuidv4(),
-      login,
-      password,
-      version: 1,
-      createdAt: timestamp,
-      updatedAt: timestamp,
-    });
-    this.db.users.push(newUser);
-    return newUser;
+  async create({ login, password }: CreateUserDto): Promise<UserEntity> {
+    const newUser = new UserEntity({ login, password });
+    return await this.repository.save(newUser);
   }
 
-  findAll(): UserEntity[] {
-    return this.db.users;
+  async findAll(): Promise<UserEntity[]> {
+    return await this.repository.find();
   }
 
-  findOne(id: string): { data: UserEntity; error: StatusCodes } {
-    const currentUser = this.db.users.find((user) => user.id === id);
+  async findOne(id: string): Promise<{ data: UserEntity; error: StatusCodes }> {
+    const currentUser = await this.repository.findOneBy({ id });
     if (!currentUser) {
       return { data: null, error: StatusCodes.NotFound };
     }
     return { data: currentUser, error: null };
   }
 
-  update(
+  async update(
     id: string,
     { oldPassword, newPassword }: UpdatePasswordDto,
-  ): { data: UserEntity; error: StatusCodes } {
-    const currentUser = this.db.users.find((user) => user.id === id);
+  ): Promise<{ data: UserEntity; error: StatusCodes }> {
+    const currentUser = await this.repository.findOneBy({ id });
     if (!currentUser) {
       return { data: null, error: StatusCodes.NotFound };
     }
@@ -48,17 +42,17 @@ export class UserService {
       return { data: null, error: StatusCodes.Forbidden };
     }
     currentUser.password = newPassword;
-    currentUser.version += 1;
-    currentUser.updatedAt = Date.now();
+    await this.repository.save(currentUser);
+
     return { data: currentUser, error: null };
   }
 
-  remove(id: string): { error: StatusCodes } {
-    const currentUserIndex = this.db.users.findIndex((user) => user.id === id);
-    if (currentUserIndex === -1) {
+  async remove(id: string): Promise<{ error: StatusCodes }> {
+    const currentUser = await this.repository.findOneBy({ id });
+    if (!currentUser) {
       return { error: StatusCodes.NotFound };
     }
-    this.db.users.splice(currentUserIndex, 1);
+    await this.repository.remove(currentUser);
     return { error: null };
   }
 }
