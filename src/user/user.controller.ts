@@ -28,22 +28,22 @@ export class UserController {
   @Post()
   @Header('Accept', 'application/json')
   @Header('Content-Type', 'application/json')
-  create(@Body() createUserDto: CreateUserDto): UserEntity {
-    return this.userService.create(createUserDto);
+  async create(@Body() createUserDto: CreateUserDto): Promise<UserEntity> {
+    return await this.userService.create(createUserDto);
   }
 
   @Get()
   @Header('Accept', 'application/json')
-  findAll(): UserEntity[] {
-    return this.userService.findAll();
+  async findAll(): Promise<UserEntity[]> {
+    return await this.userService.findAll();
   }
 
   @Get(':id')
   @Header('Accept', 'application/json')
-  findOne(
+  async findOne(
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
-  ): UserEntity {
-    const { data, error } = this.userService.findOne(id);
+  ): Promise<UserEntity> {
+    const { data, error } = await this.userService.findOne(id);
     if (error === StatusCodes.NotFound) {
       throw new NotFoundException('User not found');
     }
@@ -53,11 +53,14 @@ export class UserController {
   @Put(':id')
   @Header('Accept', 'application/json')
   @Header('Content-Type', 'application/json')
-  update(
+  async update(
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
     @Body() updatePasswordDto: UpdatePasswordDto,
-  ) {
-    const { data, error } = this.userService.update(id, updatePasswordDto);
+  ): Promise<UserEntity> {
+    const { data, error } = await this.userService.update(
+      id,
+      updatePasswordDto,
+    );
     if (error === StatusCodes.Forbidden) {
       throw new ForbiddenException('Incorrect password');
     }
@@ -70,8 +73,10 @@ export class UserController {
   @Delete(':id')
   @Header('Accept', 'application/json')
   @HttpCode(StatusCodes.NoContent)
-  remove(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string): void {
-    const { error } = this.userService.remove(id);
+  async remove(
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+  ): Promise<void> {
+    const { error } = await this.userService.remove(id);
     if (error === StatusCodes.NotFound) {
       throw new NotFoundException('User not found');
     }

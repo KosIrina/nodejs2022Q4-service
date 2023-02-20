@@ -1,46 +1,42 @@
-import { Injectable, Inject, forwardRef } from '@nestjs/common';
-import { v4 as uuidv4 } from 'uuid';
-import { DBService } from 'src/db/db.service';
-import { FavsService } from 'src/favs/favs.service';
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { CreateTrackDto } from './dto/create-track.dto';
 import { UpdateTrackDto } from './dto/update-track.dto';
 import { StatusCodes } from 'src/types';
-import { ITrack } from './models/track.model';
+import { TrackEntity } from './entities/track.entity';
 
 @Injectable()
 export class TrackService {
   constructor(
-    private db: DBService,
-    @Inject(forwardRef(() => FavsService))
-    private favsService: FavsService,
+    @InjectRepository(TrackEntity)
+    private readonly repository: Repository<TrackEntity>,
   ) {}
 
-  create(createTrackDto: CreateTrackDto) {
-    const newTrack = {
-      id: uuidv4(),
-      ...createTrackDto,
-    };
-    this.db.tracks.push(newTrack);
-    return newTrack;
+  async create(createTrackDto: CreateTrackDto): Promise<TrackEntity> {
+    const newTrack = this.repository.create(createTrackDto);
+    return await this.repository.save(newTrack);
   }
 
-  findAll() {
-    return this.db.tracks;
+  async findAll(): Promise<TrackEntity[]> {
+    return await this.repository.find();
   }
 
-  findOne(id: string): { data: ITrack; error: StatusCodes } {
-    const currentTrack = this.db.tracks.find((track) => track.id === id);
+  async findOne(
+    id: string,
+  ): Promise<{ data: TrackEntity; error: StatusCodes }> {
+    const currentTrack = await this.repository.findOneBy({ id });
     if (!currentTrack) {
       return { data: null, error: StatusCodes.NotFound };
     }
     return { data: currentTrack, error: null };
   }
 
-  update(
+  async update(
     id: string,
     { name, artistId, albumId, duration }: UpdateTrackDto,
-  ): { data: ITrack; error: StatusCodes } {
-    const currentTrack = this.db.tracks.find((track) => track.id === id);
+  ): Promise<{ data: TrackEntity; error: StatusCodes }> {
+    const currentTrack = await this.repository.findOneBy({ id });
     if (!currentTrack) {
       return { data: null, error: StatusCodes.NotFound };
     }
@@ -48,36 +44,17 @@ export class TrackService {
     currentTrack.artistId = artistId;
     currentTrack.albumId = albumId;
     currentTrack.duration = duration;
+    await this.repository.save(currentTrack);
+
     return { data: currentTrack, error: null };
   }
 
-  remove(id: string): { error: StatusCodes } {
-    const currentTrackIndex = this.db.tracks.findIndex(
-      (track) => track.id === id,
-    );
-    if (currentTrackIndex === -1) {
+  async remove(id: string): Promise<{ error: StatusCodes }> {
+    const currentTrack = await this.repository.findOneBy({ id });
+    if (!currentTrack) {
       return { error: StatusCodes.NotFound };
     }
-    this.favsService.updateAfterEntityDelition('track', id);
-    this.db.tracks.splice(currentTrackIndex, 1);
+    await this.repository.remove(currentTrack);
     return { error: null };
-  }
-
-  removeArtistId(artistId: string) {
-    const tracks = this.findAll();
-    tracks.forEach((track) => {
-      if (track.artistId === artistId) {
-        track.artistId = null;
-      }
-    });
-  }
-
-  removeAlbumId(albumId: string) {
-    const tracks = this.findAll();
-    tracks.forEach((track) => {
-      if (track.albumId === albumId) {
-        track.albumId = null;
-      }
-    });
   }
 }

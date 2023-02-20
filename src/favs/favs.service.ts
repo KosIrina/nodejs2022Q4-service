@@ -1,62 +1,68 @@
-import { Injectable, Inject, forwardRef } from '@nestjs/common';
-import { DBService } from 'src/db/db.service';
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { TrackService } from 'src/track/track.service';
 import { AlbumService } from 'src/album/album.service';
 import { ArtistService } from 'src/artist/artist.service';
 import { StatusCodes, Routes } from 'src/types';
+import { FavoritesEntity } from './entities/favs.entity';
+import { IFavoritesRepsonse } from './models/favs.model';
 
 @Injectable()
 export class FavsService {
   constructor(
-    private db: DBService,
-    @Inject(forwardRef(() => TrackService))
+    @InjectRepository(FavoritesEntity)
+    private readonly repository: Repository<FavoritesEntity>,
     private trackService: TrackService,
-    @Inject(forwardRef(() => AlbumService))
     private albumService: AlbumService,
     private artistService: ArtistService,
   ) {}
 
-  findAll() {
-    const {
-      tracks: tracksIds,
-      albums: albumsIds,
-      artists: artistsIds,
-    } = this.db.favorites;
-
-    const tracks = tracksIds.map(
-      (trackId) => this.trackService.findOne(trackId).data,
-    );
-    const artists = artistsIds.map(
-      (artistId) => this.artistService.findOne(artistId).data,
-    );
-    const albums = albumsIds.map(
-      (albumId) => this.albumService.findOne(albumId).data,
-    );
+  async findAll(): Promise<IFavoritesRepsonse> {
+    const tracks = await this.repository.find({
+      where: { entityType: 'track' },
+    });
+    const albums = await this.repository.find({
+      where: { entityType: 'album' },
+    });
+    const artists = await this.repository.find({
+      where: { entityType: 'artist' },
+    });
 
     return {
-      tracks: tracks.filter((track) => !!track),
-      artists: artists.filter((artist) => !!artist),
-      albums: albums.filter((album) => !!album),
+      tracks: tracks.map((track) => track.track),
+      albums: albums.map((album) => album.album),
+      artists: artists.map((artist) => artist.artist),
     };
   }
 
-  add(route: Routes, id: string): { error: StatusCodes; message: string } {
-    const currentEntity = this[`${route}Service`].findOne(id);
+  async add(
+    route: Routes,
+    id: string,
+  ): Promise<{ error: StatusCodes; message: string }> {
+    const currentEntity = await this[`${route}Service`].findOne(id);
     if (currentEntity.error === StatusCodes.NotFound) {
       return {
         error: StatusCodes.UnprocessableEntity,
         message: `${route[0].toUpperCase() + route.slice(1)} doesn't exist`,
       };
     }
-    this.db.favorites[`${route}s`].push(id);
+    const newFav = this.repository.create({
+      entityType: route,
+      [`${route}Id`]: id,
+    });
+    await this.repository.save(newFav);
     return { error: null, message: null };
   }
 
-  remove(route: Routes, id: string): { error: StatusCodes; message: string } {
-    const entityIndex = this.db.favorites[`${route}s`].findIndex(
-      (entityId) => entityId === id,
-    );
-    if (entityIndex === -1) {
+  async remove(
+    route: Routes,
+    id: string,
+  ): Promise<{ error: StatusCodes; message: string }> {
+    const entity = await this.repository.find({
+      where: { entityType: route, [`${route}Id`]: id },
+    });
+    if (!entity) {
       return {
         error: StatusCodes.NotFound,
         message: `${
@@ -64,16 +70,7 @@ export class FavsService {
         } hasn't been added to favorites yet`,
       };
     }
-    this.db.favorites[`${route}s`].splice(entityIndex, 1);
+    await this.repository.remove(entity);
     return { error: null, message: null };
-  }
-
-  updateAfterEntityDelition(route: Routes, id: string) {
-    const entityIndex = this.db.favorites[`${route}s`].findIndex(
-      (entityId) => entityId === id,
-    );
-    if (entityIndex !== -1) {
-      this.db.favorites[`${route}s`].splice(entityIndex, 1);
-    }
   }
 }
