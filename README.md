@@ -15,7 +15,7 @@ git clone https://github.com/KosIrina/nodejs2022Q4-service.git
 
 ```
 cd nodejs2022Q4-service
-git checkout rest-service
+git checkout containerization-and-database
 ```
 
 ## Installing NPM modules
@@ -26,7 +26,14 @@ npm install
 
 ## Running application
 
-Before running the application you can change default port to any other in `.env` file in the root directory.
+**!!! Local PostgreSQL installation is required.** Please, follow the next steps:
+- download, install and run [PostgreSQL](https://www.postgresql.org/download/)
+- in PostgreSQL create database with name `app_db`
+- make sure that the server and created database are connected
+- in `.env` replace `POSTGRES_PASSWORD` with the one you've entered when installing PostgreSQL
+- if during installation of PostgreSQL you've changed some default values (for example, `user` (by default - 'postgres') or `port` (by default - '5432')), don't forget to update them in `.env` 
+
+Before running the application you can also change default port to any other in `.env` file in the root directory.
 
 Otherwise, application will be launched on port 4000.
 
