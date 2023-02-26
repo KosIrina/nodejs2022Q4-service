@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import * as bcrypt from 'bcrypt';
+import 'dotenv/config';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { UserEntity } from './entities/user.entity';
@@ -14,7 +16,8 @@ export class UserService {
   ) {}
 
   async create({ login, password }: CreateUserDto): Promise<UserEntity> {
-    const newUser = new UserEntity({ login, password });
+    const hashedPassword = await bcrypt.hash(password, +process.env.CRYPT_SALT);
+    const newUser = new UserEntity({ login, password: hashedPassword });
     return await this.repository.save(newUser);
   }
 
@@ -38,10 +41,20 @@ export class UserService {
     if (!currentUser) {
       return { data: null, error: StatusCodes.NotFound };
     }
-    if (currentUser.password !== oldPassword) {
+
+    const passwordMatches = await bcrypt.compare(
+      oldPassword,
+      currentUser.password,
+    );
+    if (!passwordMatches) {
       return { data: null, error: StatusCodes.Forbidden };
     }
-    currentUser.password = newPassword;
+
+    const newHashedPassword = await bcrypt.hash(
+      newPassword,
+      +process.env.CRYPT_SALT,
+    );
+    currentUser.password = newHashedPassword;
     await this.repository.save(currentUser);
 
     return { data: currentUser, error: null };
