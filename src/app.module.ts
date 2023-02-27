@@ -1,5 +1,5 @@
 import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
-import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -14,6 +14,7 @@ import { AccessTokenGuard } from './auth/guards';
 import { LoggerMiddleware } from './logger/logger.middleware';
 import { LoggerModule } from './logger/logger.module';
 import { LoggingInterceptor } from './logger/logger.interceptor';
+import { AllExceptionsFilter } from './logger/exceptions.filter';
 
 @Module({
   imports: [
@@ -36,6 +37,10 @@ import { LoggingInterceptor } from './logger/logger.interceptor';
     {
       provide: APP_INTERCEPTOR,
       useClass: LoggingInterceptor,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: AllExceptionsFilter,
     },
   ],
 })
