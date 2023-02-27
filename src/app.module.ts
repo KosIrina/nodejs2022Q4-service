@@ -1,5 +1,5 @@
-import { Module } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -11,6 +11,9 @@ import { FavsModule } from './favs/favs.module';
 import { AppDataSource } from './data-source';
 import { AuthModule } from './auth/auth.module';
 import { AccessTokenGuard } from './auth/guards';
+import { LoggerMiddleware } from './logger/logger.middleware';
+import { LoggerModule } from './logger/logger.module';
+import { LoggingInterceptor } from './logger/logger.interceptor';
 
 @Module({
   imports: [
@@ -21,6 +24,7 @@ import { AccessTokenGuard } from './auth/guards';
     AlbumModule,
     FavsModule,
     AuthModule,
+    LoggerModule,
   ],
   controllers: [AppController],
   providers: [
@@ -29,6 +33,14 @@ import { AccessTokenGuard } from './auth/guards';
       provide: APP_GUARD,
       useClass: AccessTokenGuard,
     },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: LoggingInterceptor,
+    },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(LoggerMiddleware).forRoutes('*');
+  }
+}
