@@ -68,4 +68,8 @@ export class UserService {
     await this.repository.remove(currentUser);
     return { error: null };
   }
+
+  async findOneByLogin(login: string): Promise<UserEntity> {
+    return await this.repository.findOneBy({ login });
+  }
 }
